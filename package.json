@@ -7,8 +7,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest",
-    "lint": "eslint src --ext .ts",
-    "prepare": "npm run build"
+    "lint": "eslint src --ext .ts"
   },
   "keywords": [
     "meta-language",
@@ -22,12 +21,16 @@
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.5",
+    "@tsconfig/strictest": "^2.0.5",
+    "@types/immutable": "^3.8.6",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "@types/node": "^22.14.1",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "immutable": "^5.1.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
   }
 }
