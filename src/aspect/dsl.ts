@@ -4,6 +4,7 @@ import type {
   Aspect,
   AspectFunction,
   BindingKey,
+  Frame,
   SomeAspect,
   SomeSomeAspect,
 } from '../types'
@@ -34,4 +35,12 @@ export function keyOfSomeAspect<K extends string>(someAspect: SomeAspect<K>): K 
 
 export function keyOfSomeSomeAspect(someSomeAspect: SomeSomeAspect): string {
   return someSomeAspect(keyOfSomeAspect)
+}
+
+export function applySomeAspect<T, K extends string>(someAspect: SomeAspect<K>, value: T, frame: Frame): Frame {
+  return someAspect(<A>(aspect: Aspect<A, K>) => aspect.apply(value as unknown as A, frame))
+}
+
+export function applySomeSomeAspect<T>(someSomeAspect: SomeSomeAspect, value: T, frame: Frame): Frame {
+  return someSomeAspect(<K extends string>(someAspect: SomeAspect<K>) => applySomeAspect(someAspect, value, frame))
 }

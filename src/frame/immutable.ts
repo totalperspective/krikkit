@@ -2,7 +2,7 @@ import { Map } from 'immutable'
 
 import type { Frame } from '../types'
 
-export class immutableFrame implements Frame {
+export class ImmutableFrame implements Frame {
   private readonly parent: Frame | undefined
   private bindings: Map<string, unknown>
 
@@ -11,8 +11,9 @@ export class immutableFrame implements Frame {
     this.bindings = Map()
   }
 
-  bind<T extends Record<string, unknown>>(binding: T): void {
+  bind<T extends Record<string, unknown>>(binding: T): Frame {
     this.bindings = this.bindings.merge(binding)
+    return this
   }
 
   resolve<R>(path: string): R {
@@ -20,7 +21,7 @@ export class immutableFrame implements Frame {
   }
 
   extend(): Frame {
-    return new immutableFrame(this)
+    return new ImmutableFrame(this)
   }
 
   return(): Frame | undefined {
@@ -41,7 +42,7 @@ export class immutableFrame implements Frame {
   private get frameBindings(): Map<string, unknown> {
     let value = Map() as Map<string, unknown>
     if (this.parent) {
-      if (this.parent instanceof immutableFrame) {
+      if (this.parent instanceof ImmutableFrame) {
         value = this.parent.frameBindings
       } else {
         value = Map(this.parent.value)

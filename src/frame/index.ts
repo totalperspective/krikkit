@@ -1,1 +1,2 @@
-export * from './immutable'
+export * from './dsl';
+export * from './immutable';

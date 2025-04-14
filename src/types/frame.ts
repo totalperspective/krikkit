@@ -43,7 +43,7 @@ export interface Frame {
    * by aspects during processing.
    * @param value The object to bind to this frame
    */
-  bind<T extends Record<string, unknown>>(value: T): void
+  bind<T extends Record<string, unknown>>(value: T): Frame
 
   /**
    * Provides a value at a specific path in the frame's state. This is

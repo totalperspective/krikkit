@@ -8,11 +8,19 @@ export type ValueReferenceType = 'value-reference' & {
   __brand: 'value-reference'
 }
 
+export type NamespaceType = 'namespace' & {
+  __brand: 'namespace'
+}
+
 export type ArgListType = 'arg-list' & {
   __brand: 'arg-list'
 }
 
-export type KeyType = BindingFormType | ValueReferenceType | ArgListType
+export type SequenceOfType = 'sequence-of' & {
+  __brand: 'sequence-of'
+}
+
+export type KeyType = BindingFormType | ValueReferenceType | ArgListType | NamespaceType | SequenceOfType
 
 export type BindingKey = string & {
   __brand: 'binding-key'
@@ -26,7 +34,7 @@ export type AnyGrammar<BK extends BindingKey> = Grammar<LanguageKeys<BK>, BK>
 
 export type Statement<T extends LanguageKeys<BK>, BK extends BindingKey> =
   | Grammar<T, BK>
-  | ['sequence-of', Grammar<T, BK>]
+  | [SequenceOfType, Grammar<T, BK>]
   | ['union-of', Grammar<T, BK>, Grammar<T, BK>]
   | KeyType
 

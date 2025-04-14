@@ -1,0 +1,18 @@
+{
+  "name": "krikkit-e2e",
+  "version": "1.0.0",
+  "description": "End-to-end tests for Krikkit language system",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.3.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1"
+  },
+  "dependencies": {
+    "expr-eval": "^2.0.2"
+  }
+}
