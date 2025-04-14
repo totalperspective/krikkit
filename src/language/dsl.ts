@@ -15,6 +15,7 @@ import type {
   SomeSomeAspect,
   NamespaceType,
   SequenceOfType,
+  Frame,
 } from '../types'
 import { resolve, extend } from '../frame'
 import type { AnyProgram } from '../types'
@@ -34,9 +35,8 @@ const sequenceAspectFn: AspectFunction<AnyProgram[]> = (value, frame) => {
   }, frame)
 }
 
-const namespaceAspectFn: AspectFunction<Record<string, unknown>> = (value, frame) => {
-  const { key } = this as unknown as {key: string}
-  const ns = `@${key}`
+function namespaceAspectFn(this: {key: string}, value: Record<string, unknown>, frame: Frame): Frame {
+  const ns = `@${this.key}`
   return extend(frame, {
     [ns]: value,
   })
@@ -97,12 +97,13 @@ export function language<
   const bindingFormAspects = [bindingKey, ...bindingFormKeys].map(key => aspect(key, bindingFormAspectFn.bind({key}))).map((aspect) => someAspect(aspect as Aspect<unknown, string>))
   const namespaceAspects = namespaceKeys.map(key => aspect(key, namespaceAspectFn.bind({key}))).map((aspect) => someAspect(aspect as Aspect<unknown, string>))
 
-  const aspectsMap = [
+  const allAspects = [
     ...namespaceAspects,
     ...bindingFormAspects,
     ...aspects,
     ...sequeceAspects,
-  ].reduce((acc, aspect) => {
+  ]
+  const aspectsMap = allAspects.reduce((acc, aspect) => {
     const key = keyOfSomeAspect(aspect)
     return {
       ...acc,
@@ -110,12 +111,19 @@ export function language<
     }
   }, {} as AspectsMap)
 
+  const aspectOrder = allAspects.map(keyOfSomeAspect).reduce((acc, key) => {
+    if (acc.includes(key)) {
+      return acc
+    }
+    return [...acc, key]
+  }, [] as string[])
+
   return {
     allowedKeys,
     bindingKey,
     grammar,
     aspects: aspectsMap,
-    aspectOrder: [...aspects.map(keyOfSomeAspect), ...sequeceKeys, ...bindingFormKeys],
+    aspectOrder,
   }
 }
 

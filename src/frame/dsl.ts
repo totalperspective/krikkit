@@ -13,6 +13,13 @@ export function frame(bindings: Record<string, unknown> = {}): Frame {
 }
 
 export function resolve<T>(value: T, frame: Frame): unknown {
+  if (typeof value !== 'string') {
+    return value
+  }
+  return frame.resolve(value)
+}
+
+export function resolveAll<T extends object>(value: T, frame: Frame): unknown {
   if (typeof value === 'string') {
     return frame.resolve(value)
   }

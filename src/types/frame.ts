@@ -21,7 +21,7 @@ export interface Frame {
    * const age = frame.resolve<number>('user.profile.age')
    * ```
    */
-  resolve<R>(path: string): R
+  resolve<R>(path: string): R | undefined
 
   /**
    * Creates a new frame that shadows this one. The new frame starts empty

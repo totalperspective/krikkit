@@ -2,6 +2,7 @@ import { Map } from 'immutable'
 
 import type { Frame } from '../types'
 
+const notFound = Symbol('not-found')
 export class ImmutableFrame implements Frame {
   private readonly parent: Frame | undefined
   private bindings: Map<string, unknown>
@@ -16,8 +17,12 @@ export class ImmutableFrame implements Frame {
     return this
   }
 
-  resolve<R>(path: string): R {
-    return this.bindings.getIn(path.split('.')) as R
+  resolve<R>(path: string): R | undefined {
+    const value = this.bindings.getIn(path.split('.'), notFound) as R
+    if (value === notFound) {
+      return this.parent?.resolve<R>(path)
+    }
+    return value
   }
 
   extend(): Frame {
@@ -29,8 +34,9 @@ export class ImmutableFrame implements Frame {
   }
 
   provide<T>(path: string, value: T): void {
-    if (this.bindings.hasIn(path.split('.'))) {
-      this.bindings.setIn(path.split('.'), value)
+    const pathParts = path.split('.')
+    if (this.bindings.hasIn(pathParts)) {
+      this.bindings = this.bindings.setIn(pathParts, value)
       return
     }
     if (!this.parent) {

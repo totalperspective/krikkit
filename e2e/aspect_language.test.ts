@@ -5,35 +5,35 @@
  * {
  *   config: {  // Expression library (binding-form)
  *     math: {
- *       double: '$0 * 2',
- *       square: '$0 * $0',
- *       add: '$0 + $1',
- *       identity: '$0'
+ *       square: 'a * a',
+ *       double: 'a * 2',
+ *       add: 'a + b',
+ *       identity: 'a'
  *     },
  *     predicates: {
- *       isEven: '$0 % 2 === 0',
- *       isOdd: '$0 % 2 !== 0',
- *       greaterThan: '$0 > $1'
+ *       isEven: 'a % 2 == 0',
+ *       isOdd: 'a % 2 != 0',
+ *       greaterThan: 'a > b'
  *     },
  *     threshold: 10
  *   },
  *   steps: [          // Sequence of operations
  *     {
  *       transform: {  // Transform operation
- *         expression: 'config.math.double'
+ *         expression: '@config.math.square'
  *       }
  *     },
  *     {
  *       filter: {     // Filter operation
- *         expression: 'config.predicates.isEven'
+ *         expression: '@config.predicates.isEven'
  *       }
  *     },
  *     {
  *       when: {       // Conditional processing
- *         condition: 'config.predicates.greaterThan',
- *         args: ['@input', 'config.threshold'],
- *         consequent: 'config.math.double',
- *         antecedent: 'config.math.identity'
+ *         condition: '@config.predicates.greaterThan',
+ *         args: ['@input', '@config.threshold'],
+ *         consequent: '@config.math.double',
+ *         antecedent: '@config.math.identity'
  *       }
  *     }
  *   ]
@@ -43,13 +43,13 @@
  * Given input [1, 2, 3, 4, 5, 6]:
  * 
  * The pipeline will:
- * 1. Double all numbers: [2, 4, 6, 8, 10, 12]
- * 2. Keep only the even numbers: [4, 6, 8, 10, 12]
+ * 1. Square all numbers: [1, 4, 9, 16, 25, 36]
+ * 2. Keep only the even numbers: [4, 16, 36]
  * 3. For each number, compare it with threshold (10):
- *    - Numbers ≤ 10 (4, 6, 8, 10) are kept as is
- *    - Numbers > 10 (12) are doubled
+ *    - Numbers ≤ 10 (4) are kept as is
+ *    - Numbers > 10 (16, 36) are doubled
  * 
- * Final output: [4, 6, 8, 10, 24]
+ * Final output: [4, 32, 72]
  */
 
 import { describe, test, expect } from 'vitest';
@@ -84,8 +84,9 @@ describe('Aspect-Oriented Language Tests', () => {
         krikkit.aspect('transform', (value: { expression: string }, frame: Frame) => {
           const pipeline = frame.resolve<Pipeline<number>>('@pipeline');
           const exprStr = frame.resolve<string>(value.expression);
+          console.log('exprStr', exprStr);
           const expr = parser.parse(exprStr);
-          const fn = expr.toJSFunction('$0');
+          const fn = expr.toJSFunction('a');
           
           const newPipeline = [...pipeline, fn];
           frame.provide('@pipeline', newPipeline);
@@ -98,8 +99,9 @@ describe('Aspect-Oriented Language Tests', () => {
         krikkit.aspect('filter', (value: { expression: string }, frame: Frame) => {
           const pipeline = frame.resolve<Pipeline<number>>('@pipeline');
           const exprStr = frame.resolve<string>(value.expression);
+          console.log('exprStr', exprStr);
           const expr = parser.parse(exprStr);
-          const fn = expr.toJSFunction('$0');
+          const fn = expr.toJSFunction('a');
           
           const newPipeline = [...pipeline, (input) => fn(input) ? input : undefined];
           frame.provide('@pipeline', newPipeline);
@@ -125,9 +127,9 @@ describe('Aspect-Oriented Language Tests', () => {
           const consequentExpr = parser.parse(consequentStr);
           const antecedentExpr = parser.parse(antecedentStr);
           
-          const conditionFn = conditionExpr.toJSFunction('$0,$1');
-          const consequentFn = consequentExpr.toJSFunction('$0');
-          const antecedentFn = antecedentExpr.toJSFunction('$0');
+          const conditionFn = conditionExpr.toJSFunction('a,b');
+          const consequentFn = consequentExpr.toJSFunction('a');
+          const antecedentFn = antecedentExpr.toJSFunction('a');
           
           // Resolve all args except @input
           const resolvedArgs = value.args.map(arg => 
@@ -156,31 +158,31 @@ describe('Aspect-Oriented Language Tests', () => {
     const prog = krikkit.program<CreateBindingKey<'config'>, typeof pipelineLang>({
       config: {
         math: {
-          double: '$0 * 2',
-          square: '$0 * $0',
-          add: '$0 + $1',
-          identity: '$0'
+          square: 'a * a',
+          double: 'a * 2',
+          add: 'a + b',
+          identity: 'a'
         },
         predicates: {
-          isEven: '$0 % 2 === 0',
-          isOdd: '$0 % 2 !== 0',
-          greaterThan: '$0 > $1'
+          isEven: 'a % 2 == 0',
+          isOdd: 'a % 2 != 0',
+          greaterThan: 'a > b'
         },
         threshold: 10
       },
       steps: [
         {
-          transform: { expression: 'config.math.double' }
+          transform: { expression: '@config.math.square' }
         },
         {
-          filter: { expression: 'config.predicates.isEven' }
+          filter: { expression: '@config.predicates.isEven' }
         },
         {
           when: {
-            condition: 'config.predicates.greaterThan',
-            args: ['@input', 'config.threshold'],
-            consequent: 'config.math.double',
-            antecedent: 'config.math.identity'
+            condition: '@config.predicates.greaterThan',
+            args: ['@input', '@config.threshold'],
+            consequent: '@config.math.double',
+            antecedent: '@config.math.identity'
           }
         }
       ]
@@ -194,11 +196,12 @@ describe('Aspect-Oriented Language Tests', () => {
 
     // Get the pipeline and run it on test input
     const pipeline = resultFrame.resolve<Pipeline<number>>('@pipeline');
+    expect(pipeline).toHaveLength(3);
     const input = [1, 2, 3, 4, 5, 6];
     const output = input
       .map(x => pipeline.reduce((value, step) => value === undefined ? undefined : step(value), x))
       .filter((x): x is number => x !== undefined);
 
-    expect(output).toEqual([4, 6, 8, 10, 24]);
+    expect(output).toEqual([4, 32, 72]);
   });
 });
