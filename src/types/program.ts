@@ -1,38 +1,14 @@
-import type { BindingFormType, Grammar, Language, Statement, ValueReferenceType } from './language'
+import type { AnyLanguage, BindingKey } from './language'
+import type { Macro } from './macro'
 
-type ValueReference = string
-type BindingForm = {
-  [K in string]: BindingForm | ValueReference
-}
-
-export type ProgramStatement<
-  L extends Language<string[], string, Grammar<string[], never>>,
-  S extends Statement<L['allowedKeys'], L['bindingKey']>,
-> = S extends ValueReferenceType
-  ? ValueReference
-  : S extends BindingFormType
-    ? BindingForm
-    : S extends Grammar<L['allowedKeys'], L['bindingKey']>
-      ? {
-          [K in keyof S]: S[K] extends Statement<L['allowedKeys'], L['bindingKey']>
-            ? ProgramStatement<L, S[K]>
-            : never
-        }
-      : never
-
-type ProgramGrammar<L extends Language<string[], string, Grammar<string[], never>>> = {
-  [K in L['allowedKeys'][number]]: K extends L['bindingKey']
-    ? BindingForm
-    : L['grammar'][K] extends Statement<L['allowedKeys'], L['bindingKey']>
-      ? ProgramStatement<L, L['grammar'][K]>
-      : never
-}
-
-export interface Program<L extends Language<string[], string, Grammar<string[], never>>> {
+export type Program<BK extends BindingKey, L extends AnyLanguage<BK>> = {
   language: L
-  program: ProgramGrammar<L>
+  program: Record<string, unknown>
+  macros?: Macro<string, BK, L>[]
 }
 
-export interface ProgramParser<L extends Language<string[], string, Grammar<string[], never>>> {
-  parse: (input: object) => Program<L>
+export type ProgramResult = unknown
+
+export type ProgramRunner<BK extends BindingKey, L extends AnyLanguage<BK>> = {
+  run: (program: Program<BK, L>) => ProgramResult
 }

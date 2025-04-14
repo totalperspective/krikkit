@@ -3,14 +3,17 @@ import type {
   AnyLanguage,
   Aspect,
   AspectFunction,
+  BindingKey,
   SomeAspect,
   SomeSomeAspect,
 } from '../types'
 
-export function aspect<L extends AnyLanguage, K extends AllowedKeysOf<L>[number], T>(
-  key: K,
-  apply: AspectFunction<T>
-): Aspect<T, K> {
+export function aspect<
+  BK extends BindingKey,
+  L extends AnyLanguage<BK>,
+  K extends AllowedKeysOf<BK, L>[number],
+  T,
+>(key: K, apply: AspectFunction<T>): Aspect<T, K> {
   return {
     key,
     apply,

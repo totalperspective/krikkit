@@ -1,6 +1,13 @@
 // Macro types will be defined here
 
-import type { ExtendLanguage, Grammar, GrammarOf, Language } from './language'
+import type {
+  Grammar,
+  Language,
+  AnyLanguage,
+  BindingKey,
+  ExtendLanguage,
+  LanguageKeys,
+} from './language'
 import type { Program } from './program'
 
 /**
@@ -43,7 +50,17 @@ export type ExtractNamedArgs<T extends MacroArgs> = T extends NoArgs
  * Defaults are defined in terms of the macro's arguments.
  */
 export type MacroDefaults<T extends MacroArgs> = Partial<
-  Record<ExtractNamedArgs<T>[number], unknown>
+  T extends true
+    ? Record<string, never>
+    : T extends string
+      ? Record<T, unknown>
+      : T extends '...'
+        ? Record<string, unknown>
+        : T extends string[]
+          ? Record<T[number], unknown>
+          : T extends [...infer A, '...']
+            ? Record<Extract<A[number], string>, unknown>
+            : never
 >
 
 /**
@@ -51,7 +68,8 @@ export type MacroDefaults<T extends MacroArgs> = Partial<
  * The binding key is a string that determines how the arguments are bound.
  */
 export type MappedMethod<
-  L extends Language<string[], string, Grammar<string[], never>>,
+  BK extends BindingKey,
+  L extends Language<LanguageKeys<BK>, BK, Grammar<LanguageKeys<BK>, BK>>,
   MethodArgs extends NamedArgs,
   MacroArgs extends NamedArgs,
 > = {
@@ -76,10 +94,11 @@ export type MappedMethod<
  * or a mapped method with a binding form.
  */
 export type MacroMethod<
-  L extends Language<string[], string, Grammar<string[], never>>,
+  BK extends BindingKey,
+  L extends Language<LanguageKeys<BK>, BK, Grammar<LanguageKeys<BK>, BK>>,
   MacroArgs extends NamedArgs,
   MethodArgs extends NamedArgs = NamedArgs,
-> = MethodArgs | MappedMethod<L, MethodArgs, MacroArgs>
+> = MethodArgs | MappedMethod<BK, L, MethodArgs, MacroArgs>
 
 /**
  * Type alias for macro template body.
@@ -93,7 +112,8 @@ export type MacroBody = Record<string, unknown>
  */
 export interface Macro<
   Key extends string,
-  L extends Language<string[], string, Grammar<string[], never>>,
+  BK extends BindingKey,
+  L extends Language<LanguageKeys<BK>, BK, Grammar<LanguageKeys<BK>, BK>>,
   Args extends MacroArgs = MacroArgs,
 > {
   /**
@@ -116,7 +136,7 @@ export interface Macro<
    * Each method must either provide all macro args directly
    * or bind them through its binding form.
    */
-  readonly methods: MacroMethod<L, ExtractNamedArgs<Args>, NamedArgs>[]
+  readonly methods: MacroMethod<BK, L, ExtractNamedArgs<Args>, NamedArgs>[]
 
   /**
    * The template body to expand when the macro is matched.
@@ -134,10 +154,11 @@ export interface Macro<
 export type SomeMacro = <R>(
   callback: <
     Key extends string,
-    L extends Language<string[], string, Grammar<string[], never>>,
+    BK extends BindingKey,
+    L extends Language<LanguageKeys<BK>, BK, Grammar<LanguageKeys<BK>, BK>>,
     Args extends MacroArgs,
   >(
-    macro: Macro<Key, L, Args>
+    macro: Macro<Key, BK, L, Args>
   ) => R
 ) => R
 
@@ -158,20 +179,18 @@ export interface MacroExpander {
    * @param program The program to expand
    * @returns The expanded result
    */
-  expand<
-    L1 extends Language<string[], string, Grammar<string[], never>>,
-    L2 extends WithMacro<L1, string>,
-  >(
+  expand<BK extends BindingKey, L1 extends AnyLanguage<BK>, L2 extends WithMacro<BK, L1, string>>(
     macro: SomeMacro,
-    program: Program<L2>
-  ): Program<L1>
+    program: Program<BK, L2>
+  ): Program<BK, L1>
 }
 
-type MacroKey<BindingKey extends string> = 'args' | 'defaults' | 'methods' | 'body' | BindingKey
-type MacroLanguage<L extends Language<string[], string, Grammar<string[], never>>> = Language<
-  MacroKey<L['bindingKey']>[],
-  L['bindingKey'],
-  Grammar<Exclude<MacroKey<L['bindingKey']>[], [L['bindingKey']]>[number][], never>
+export type MacroKey = 'args' | 'defaults' | 'methods' | 'body'
+
+export type MacroLanguage<BK extends BindingKey> = Language<
+  [...MacroKey[], BK],
+  BK,
+  Grammar<[...MacroKey[], BK], BK>
 >
 
 export interface MacroParser {
@@ -180,12 +199,13 @@ export interface MacroParser {
    * @param input The input string to parse
    * @returns The parsed macro definition
    */
-  parse<L extends MacroLanguage<Language<string[], string, Grammar<string[], never>>>>(
-    input: Program<L>
-  ): Macro<string, L, string[]>
+  parse<BK extends BindingKey, L extends AnyLanguage<BK>>(
+    input: Program<BK, L>
+  ): Macro<string, BK, L, string[]>
 }
 
 export type WithMacro<
-  L extends Language<string[], string, Grammar<string[], never>>,
+  BK extends BindingKey,
+  L extends Language<LanguageKeys<BK>, BK, Grammar<LanguageKeys<BK>, BK>>,
   MacroKey extends string,
-> = ExtendLanguage<string[], L['bindingKey'], GrammarOf<L>, L, [MacroKey]>
+> = ExtendLanguage<LanguageKeys<BK>, BK, Grammar<LanguageKeys<BK>, BK>, L, [MacroKey]>

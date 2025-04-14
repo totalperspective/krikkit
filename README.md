@@ -26,3 +26,44 @@ process obj, key-order, key-impls, context = empty-frame
 ## Usage
 
 Coming soon...
+
+## Appendix: Project Structure
+
+```
+src/
+  types/
+    index.ts        # Exports all types
+    language.ts     # Language types
+    macro.ts        # Macro types
+    program.ts      # Program types
+    frame.ts        # Frame types
+    aspect.ts       # Aspect types
+
+  language/
+    index.ts        # Exports: language(), etc.
+    immutable.ts    # Implementation
+    dsl.ts          # Language DSL functions
+
+  macro/
+    index.ts        # Exports: macro functions
+
+  program/
+    index.ts        # Exports: program(), run()
+    immutable.ts    # Implementation
+
+  frame/           # (already implemented)
+    index.ts       # Exports: frame(), etc.
+    immutable.ts   # Implementation
+
+  aspect/          # (already implemented)
+    index.ts       # Exports: aspect()
+    dsl.ts         # (reference only)
+```
+
+### Key Principles:
+
+- All types are centralized in `types/`
+- Module index files export only functions
+- Implementation details are in `immutable.ts` or `dsl.ts`
+- DSLs provide domain-specific language functions
+- Immutable implementations for core data structures

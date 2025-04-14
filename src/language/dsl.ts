@@ -1,29 +1,35 @@
 import { keyOfSomeAspect } from '../aspect'
 
-import type { Grammar, Language, SomeAspect } from '../types'
+import type {
+  Grammar,
+  Language,
+  SomeAspect,
+  BindingKey,
+  BindingFormType,
+  ArgListType,
+  ValueReferenceType,
+} from '../types'
 
 export function language<
-  T extends string[],
-  BK extends T[number],
-  G extends Grammar<Exclude<T, BK>, never>,
+  T extends [...string[], BK],
+  BK extends BindingKey,
+  G extends Grammar<T, BK>,
 >(
   allowedKeys: T,
   bindingKey: BK,
   grammar: G,
   aspects: SomeAspect<T[number]>[] = []
 ): Language<T, BK, G> {
-  const aspectsMap = aspects.reduce(
-    (acc, aspect) => {
-      const key = keyOfSomeAspect(aspect)
-      return {
-        ...acc,
-        [key]: aspect,
-      }
-    },
-    {} as {
-      [K in T[number]]?: K extends BK ? SomeAspect<K> : never
+  type AspectsMap = {
+    [K in T[number]]?: K extends BK ? never : SomeAspect<K>
+  }
+  const aspectsMap = aspects.reduce((acc, aspect) => {
+    const key = keyOfSomeAspect(aspect)
+    return {
+      ...acc,
+      [key]: aspect,
     }
-  )
+  }, {} as AspectsMap)
 
   return {
     allowedKeys,
@@ -33,3 +39,7 @@ export function language<
     aspectOrder: aspects.map(keyOfSomeAspect),
   }
 }
+
+export const bindingForm = 'binding-form' as BindingFormType
+export const valueReference = 'value-reference' as ValueReferenceType
+export const argList = 'arg-list' as ArgListType
